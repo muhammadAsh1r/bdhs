@@ -1,26 +1,53 @@
 @import "tailwindcss";
 
+@theme {
+  --color-background: #0A0A0F;
+  --color-human: #00D4FF;
+  --color-ai: #7C3AED;
+  --color-glass: rgba(255, 255, 255, 0.05);
+  
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #0A0A0F;
+  --foreground: #FFFFFF;
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  /* Slight indigo tint overlay */
+  background-image: radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.05) 0%, transparent 100%);
 }
+
+@layer utilities {
+  .glass-card {
+    background: var(--color-glass);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
+  .glow-human {
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+    border-color: rgba(0, 212, 255, 0.3);
+  }
+
+  .glow-ai {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+    border-color: rgba(124, 58, 237, 0.3);
+  }
+
+  .text-glow-human {
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+  }
+
+  .text-glow-ai {
+    text-shadow: 0 0 10px rgba(124, 58, 237, 0.5);
+  }
+}
+
