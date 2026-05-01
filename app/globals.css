@@ -107,5 +107,100 @@ body {
     from { transform: translateY(-20px); }
     to { transform: translateY(0); }
   }
+
+  /* Progress Ring */
+  .progress-ring-circle {
+    transition: stroke-dashoffset 0.5s ease-in-out;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+
+  /* Graph Styles */
+  .graph-line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 5px currentColor);
+    transition: d 0.5s ease-in-out;
+  }
+
+  .graph-area {
+    opacity: 0.1;
+    transition: d 0.5s ease-in-out;
+  }
+
+  .convergence-pulse {
+    animation: convergence-glow 2s infinite ease-in-out;
+  }
+
+  @keyframes convergence-glow {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.5); opacity: 1; }
+  }
+
+  /* Alert State Styles */
+  .alert-overlay {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.1) 0%, transparent 80%);
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    z-index: 50;
+  }
+
+  .alert-active .alert-overlay {
+    opacity: 1;
+  }
+
+  .alert-active .glass-card {
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.1);
+  }
+
+  .alert-text {
+    color: #EF4444;
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    animation: alert-pulse 1.5s infinite ease-in-out;
+  }
+
+  .metric-pulse-alert {
+    animation: metric-alert-glow 2s infinite ease-in-out;
+  }
+
+  @keyframes metric-alert-glow {
+    0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); }
+    50% { box-shadow: 0 0 40px rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.5); }
+  }
+
+  @keyframes alert-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* Custom Range Slider Styling */
+  input[type='range'] {
+    -webkit-appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+  }
+
+  input[type='range']::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    transition: transform 0.2s ease;
+  }
+
+  input[type='range']::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
 }
 
