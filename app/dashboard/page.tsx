@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { MetricDisplay } from '@/components/ui/MetricDisplay';
 import { Toggle } from '@/components/ui/Toggle';
 import { supabase } from '@/lib/supabase';
 
-export default function Home() {
+function DashboardContent() {
   const searchParams = useSearchParams();
   const userWeight = Number(searchParams.get('weight')) || 70;
   
@@ -688,5 +688,18 @@ export default function Home() {
         <div className={`absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] transition-all duration-1000 ${isAlertActive ? 'bg-red-600/10' : 'bg-ai/5'}`} />
       </div>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-human font-black italic tracking-[0.3em] gap-4">
+        <div className="w-8 h-8 border-2 border-human border-t-transparent rounded-full animate-spin" />
+        INITIALIZING BDHS...
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
