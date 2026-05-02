@@ -1,12 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { MetricDisplay } from '@/components/ui/MetricDisplay';
 import { Toggle } from '@/components/ui/Toggle';
 import { supabase } from '@/lib/supabase';
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  const userWeight = Number(searchParams.get('weight')) || 70;
+  
   const [isWearableMode, setIsWearableMode] = useState(false);
   const [humanSweat, setHumanSweat] = useState(80);
   const [aiWater, setAiWater] = useState(200);
@@ -14,6 +18,8 @@ export default function Home() {
   const [aiPrompts, setAiPrompts] = useState(5);
   const [activityLevel, setActivityLevel] = useState<'low' | 'moderate' | 'high'>('moderate');
   const [hydrationLevel, setHydrationLevel] = useState(72);
+  const [isFitbitConnected, setIsFitbitConnected] = useState(false);
+  const [wearableData, setWearableData] = useState<any>(null);
   const [history, setHistory] = useState<{human: number, ai: number, time: number}[]>([]);
   const [sessionHistory, setSessionHistory] = useState<{
     id: string,
@@ -35,8 +41,9 @@ export default function Home() {
   }, []);
 
   // Bio-Intervention Logic
-  const isAlertActive = hydrationLevel < 30;
-  const alertIntensity = Math.max(0, (30 - hydrationLevel) / 30);
+  const deficitThreshold = userWeight * 0.02 * 1000; // 2% of body weight in mL
+  const isAlertActive = humanSweat >= deficitThreshold;
+  const alertIntensity = Math.max(0, (humanSweat - (deficitThreshold * 0.8)) / (deficitThreshold * 0.2));
 
   // Derive AI Water from Prompts (1 prompt = 40mL water for compute)
   useEffect(() => {
@@ -125,6 +132,30 @@ export default function Home() {
       }, ...prev].slice(0, 10));
     }
   };
+
+  // Fetch Real Wearable Data
+  useEffect(() => {
+    const fetchWearableData = async () => {
+      try {
+        const res = await fetch('/api/wearable/data');
+        if (res.ok) {
+          const data = await res.json();
+          setWearableData(data);
+          setIsFitbitConnected(true);
+          setHumanSweat(data.sweat_ml);
+          setIsWearableMode(true);
+        } else {
+          setIsFitbitConnected(false);
+        }
+      } catch (e) {
+        setIsFitbitConnected(false);
+      }
+    };
+
+    fetchWearableData();
+    const interval = setInterval(fetchWearableData, 60000); // Poll every 60s
+    return () => clearInterval(interval);
+  }, []);
 
   // Simulation & Real-Time Persistence Logic
   useEffect(() => {
@@ -219,11 +250,26 @@ export default function Home() {
         </div>
 
         <div className="flex items-center gap-6">
+          {!isFitbitConnected && (
+            <button 
+              onClick={() => window.location.href = '/api/auth/fitbit/authorize'}
+              className="hidden md:flex items-center gap-2 px-4 py-2 bg-human/10 border border-human/20 rounded-xl text-[8px] font-black uppercase tracking-widest text-human hover:bg-human/20 transition-all"
+            >
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M16.14 14.28c-1.07 0-1.95-.87-1.95-1.95s.87-1.95 1.95-1.95c1.07 0 1.95.87 1.95 1.95s-.88 1.95-1.95 1.95zm-3.66-1.95c0-1.07-.87-1.95-1.95-1.95-1.07 0-1.95.87-1.95 1.95s.87 1.95 1.95 1.95c1.07 0 1.95-.87 1.95-1.95zm-3.66 0c0-1.07-.87-1.95-1.95-1.95s-1.95.87-1.95 1.95.87 1.95 1.95 1.95 1.95-.87 1.95-1.95zm7.32-3.66c-1.07 0-1.95-.87-1.95-1.95s.87-1.95 1.95-1.95c1.07 0 1.95.87 1.95 1.95s-.88 1.95-1.95 1.95zm-3.66 0c0-1.07-.87-1.95-1.95-1.95-1.07 0-1.95.87-1.95 1.95s.87 1.95 1.95 1.95c1.07 0 1.95-.87 1.95-1.95zm-3.66 0c0-1.07-.87-1.95-1.95-1.95s-1.95.87-1.95 1.95.87 1.95 1.95 1.95 1.95-.87 1.95-1.95zM12.48 4.99c-1.07 0-1.95-.87-1.95-1.95s.87-1.95 1.95-1.95 1.95.87 1.95 1.95-.88 1.95-1.95 1.95z"/></svg>
+              Connect Fitbit
+            </button>
+          )}
+          {isFitbitConnected && (
+            <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-xl text-[8px] font-black uppercase tracking-widest text-green-500">
+              <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+              Fitbit Linked
+            </div>
+          )}
           <div className="flex flex-col items-end gap-1">
-            <span className="text-[8px] font-bold opacity-30 uppercase tracking-widest">Simulation Level</span>
+            <span className="text-[8px] font-bold opacity-30 uppercase tracking-widest">Deficit Control (Sweat)</span>
             <input 
-              type="range" min="0" max="100" value={hydrationLevel} 
-              onChange={(e) => setHydrationLevel(Number(e.target.value))}
+              type="range" min="0" max={deficitThreshold * 1.5} value={humanSweat} 
+              onChange={(e) => setHumanSweat(Number(e.target.value))}
               className="w-24 accent-white"
             />
           </div>
@@ -243,7 +289,7 @@ export default function Home() {
 
           <div className="relative z-10 flex flex-col items-center w-full">
             <h2 className={`text-xs font-black uppercase tracking-[0.4em] mb-2 ${isAlertActive ? 'text-red-500 opacity-100' : 'opacity-40'}`}>
-              {isAlertActive ? 'HYDRATION GAP (CRITICAL)' : 'Hydration Gap'}
+              {isAlertActive ? `CRITICAL DEFICIT REACHED (> ${userWeight * 0.02}kg)` : 'Hydration Gap'}
             </h2>
             
             <div className={`text-7xl md:text-9xl font-black tracking-tighter mb-12 animate-count transition-colors duration-500 ${
@@ -258,7 +304,7 @@ export default function Home() {
               <div className="flex flex-col items-center md:items-start relative">
                 {isWearableMode && (
                   <div className="absolute -top-6 -left-2 text-[6px] font-black uppercase tracking-widest text-human/40 animate-pulse">
-                    Streaming Bio-Data
+                    {isFitbitConnected ? 'Live Fitbit Stream' : 'Streaming Bio-Data'}
                   </div>
                 )}
                 <span className={`text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1 ${isAlertActive ? 'text-red-400' : 'text-human'}`}>
@@ -414,11 +460,11 @@ export default function Home() {
                   <span className={`text-4xl md:text-5xl font-black italic tracking-tighter ${isConverged ? 'text-white text-glow-white' : 'text-human'}`}>
                     {isConverged ? 'Convergence Achieved' : `In ${Math.ceil(timeToConvergence)} minutes`}
                   </span>
-                  {isWearableMode && !isConverged && (
-                    <div className="text-[8px] font-black uppercase tracking-widest px-2 py-1 bg-white/5 rounded border border-white/10 animate-pulse">
-                      Recalculating...
-                    </div>
-                  )}
+                    {isWearableMode && !isConverged && (
+                      <div className="text-[8px] font-black uppercase tracking-widest px-2 py-1 bg-white/5 rounded border border-white/10 animate-pulse">
+                        {isFitbitConnected ? 'Polling Wearable...' : 'Recalculating...'}
+                      </div>
+                    )}
                   {!isWearableMode && !isConverged && sweatRatePerMin === 0 && (
                     <span className="text-xs opacity-40">No activity detected</span>
                   )}
@@ -496,10 +542,16 @@ export default function Home() {
             {/* Human Input Section */}
             <div className="flex flex-col gap-6">
               {isWearableMode ? (
-                <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-human/20 rounded-2xl p-6">
-                  <div className="w-3 h-3 bg-human rounded-full animate-pulse mb-3" />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-human">Connected to Bio-Wearable PX-1</span>
-                  <span className="text-[8px] opacity-40 mt-1 uppercase">Streaming high-fidelity physiological data</span>
+                <div className={`h-full flex flex-col items-center justify-center border-2 border-dashed rounded-2xl p-6 transition-all ${isFitbitConnected ? 'border-green-500/20 bg-green-500/5' : 'border-human/20'}`}>
+                  <div className={`w-3 h-3 rounded-full animate-pulse mb-3 ${isFitbitConnected ? 'bg-green-500' : 'bg-human'}`} />
+                  <span className={`text-[10px] font-bold uppercase tracking-[0.2em] ${isFitbitConnected ? 'text-green-500' : 'text-human'}`}>
+                    {isFitbitConnected ? `Live Fitbit Feed (${wearableData?.provider})` : 'Connected to Bio-Wearable PX-1'}
+                  </span>
+                  <span className="text-[8px] opacity-40 mt-1 uppercase">
+                    {isFitbitConnected 
+                      ? `${wearableData?.heartRate || '--'} BPM • ${wearableData?.calories || '--'} CAL • Streaming` 
+                      : 'Streaming high-fidelity physiological data'}
+                  </span>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-6">

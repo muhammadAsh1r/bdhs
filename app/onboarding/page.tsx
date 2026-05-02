@@ -13,6 +13,7 @@ export default function OnboardingPage() {
   const [mode, setMode] = useState<Mode | null>(null);
   const [activity, setActivity] = useState('moderate');
   const [duration, setDuration] = useState(60);
+  const [weight, setWeight] = useState(70); // Default 70kg
   const [aiUsage, setAiUsage] = useState<AIUsage>('moderate');
   const [prompts, setPrompts] = useState(15);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -29,8 +30,8 @@ export default function OnboardingPage() {
   }, [step, mode]);
 
   const finishOnboarding = () => {
-    // Optionally save to Supabase or local storage here
-    router.push('/dashboard');
+    // Pass weight to dashboard
+    router.push(`/dashboard?weight=${weight}`);
   };
 
   return (
@@ -118,6 +119,13 @@ export default function OnboardingPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-8">
                     <div>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-human mb-4 block">Body Weight (kg)</label>
+                      <input 
+                        type="number" value={weight} onChange={(e) => setWeight(Number(e.target.value))}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-xl font-black focus:border-human outline-none"
+                      />
+                    </div>
+                    <div>
                       <label className="text-[10px] font-black uppercase tracking-widest text-human mb-4 block">Session Duration</label>
                       <input 
                         type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))}
@@ -125,14 +133,13 @@ export default function OnboardingPage() {
                       />
                       <span className="text-[8px] opacity-20 uppercase mt-2 block tracking-widest">Minutes</span>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-black uppercase tracking-widest text-human mb-4 block">Initial Sweat Rate</label>
-                      <input 
-                        type="number" placeholder="Optional"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-xl font-black focus:border-human outline-none"
-                      />
-                      <span className="text-[8px] opacity-20 uppercase mt-2 block tracking-widest">mL / Session</span>
-                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-human mb-4 block">Initial Sweat Rate (mL)</label>
+                    <input 
+                      type="number" placeholder="Optional"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-xl font-black focus:border-human outline-none"
+                    />
                   </div>
                 </div>
               ) : (
@@ -210,7 +217,7 @@ export default function OnboardingPage() {
                 </div>
                 <div className="flex justify-between items-center border-b border-white/5 pb-4">
                   <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">Physiological Load</span>
-                  <span className="text-sm font-black uppercase tracking-wider">{activity} activity</span>
+                  <span className="text-sm font-black uppercase tracking-wider">{activity} ({weight}kg)</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-white/5 pb-4">
                   <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">Digital Demand</span>
